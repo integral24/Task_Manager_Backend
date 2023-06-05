@@ -1,41 +1,48 @@
 import { Request, Response } from 'express';
 import pool from '../assets/db';
-// import bcrypt from 'bcryptjs';
 import { generateToken } from '../assets/tokenServices';
 
-//TODO: получение рефреш токена из кук и из юзера, сравнение и если тру, то отдать новую пару, если фолз, то вернуть ошибку и открывать страницу логин
+// вероятно, что сайт будет работать только на одном устройстве из-за сверки токена с юзером
 
 export const refreshTokenController = async (req: Request, res: Response) => {
   try {
-    const { email }: {email: string} = req.body;
-    const token = req.cookies.refresh_token;
+    const { email } = req.body;
+    const currentToken = req.cookies.refresh_token;
 
-    const user = await pool.query('SELECT * FROM `users` WHERE `email` = ?', email);
-    console.log(req.cookies.refresh_token);
-    // console.log(user[0]);
-
-
+    const user: any = await pool.query('SELECT * FROM `users` WHERE `email` = ?', email);
+    const { id, refreshToken } = user[0][0];
 
     if (user) {
-      const token = generateToken('123', email);
-  
-      return res
-        .status(200)
-        .cookie("refresh_token", token.refreshToken, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-        })
-        .json({successToken: token.successToken });
+      if (currentToken === refreshToken) {
+        const newToken = generateToken(id, email);
+        const refreshToken = newToken.refreshToken;
+        await pool.query('UPDATE `users` SET ? WHERE `email` = ?', [{ refreshToken }, email]);
+
+        res
+          .status(200)
+          .cookie('refresh_token', newToken.refreshToken, {
+            httpOnly: true,
+            maxAge: 1000 * 60 * 60 * 24 * 30,
+          })
+          .json({
+            successToken: newToken.successToken,
+          });
+      } else {
+        const refreshToken = null;
+        await pool.query('UPDATE `users` SET ? WHERE `email` = ?', [{ refreshToken }, email]);
+
+        res.json({
+          signOut: true,
+        });
+      }
     } else {
       res.status(404).json({
-        error: 'user not found'
-      })
+        error: 'user not found',
+      });
     }
-
   } catch {
     res.json({
-      error: 'Error token service'
-    })
+      error: 'Error token service',
+    });
   }
-
-}
+};
