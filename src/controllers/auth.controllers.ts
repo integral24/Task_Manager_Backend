@@ -1,9 +1,17 @@
 import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import pool from '../assets/db';
 import bcrypt from 'bcrypt';
 import { generateToken } from '../assets/tokenServices';
 import dotenv from 'dotenv';
 dotenv.config();
+
+interface IDecodeToken {
+  userId: number;
+  email: string;
+  iat: number;
+  exp: number;
+}
 
 const hashedPass = (pass: string) => {
   return bcrypt.hashSync(pass, 10);
@@ -11,35 +19,34 @@ const hashedPass = (pass: string) => {
 
 const resErrorUserPayload = (res: Response) => {
   return res.status(200).json({
-    error: 'Wrong auth data'
-  })
+    error: 'Wrong auth data',
+  });
 };
 
 export const signUp = async (req: Request, res: Response) => {
   try {
-    const { name, email } = req.body;
-    const pass = hashedPass(req.body.pass);
-    
-    const newUser: any = await pool.query('INSERT INTO `users` SET ?', {name, email, pass});
-    const id = newUser[0].insertId;
-    const { refreshToken, successToken } = generateToken(id, email);
+    let { name, email, pass } = req.body;
+    if (name && email && pass) {
+      pass = hashedPass(req.body.pass);
 
-    await pool.query('UPDATE `users` SET ? WHERE `id` = ?', [{ refreshToken }, id]);
+      const newUser: any = await pool.query('INSERT INTO `users` SET ?', { name, email, pass });
+      const id = newUser[0].insertId;
+      const { refreshToken, successToken } = generateToken(id, email);
+      await pool.query('UPDATE `users` SET ? WHERE `id` = ?', [{ refreshToken }, id]);
 
-    res
-      .status(200)
-      .cookie('refresh_token', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-      })
-      .json({
-        successToken: successToken,
-        user: { 
-          name, 
-          email, 
-          userId: newUser[0].insertId 
-        },
-      });
+      res
+        .status(200)
+        .cookie('refresh_token', refreshToken, {
+          httpOnly: true,
+          maxAge: 1000 * 60 * 60 * 24 * 30,
+        })
+        .json({
+          successToken: successToken,
+          user: {
+            name,
+          },
+        });
+    } else resErrorUserPayload(res);
   } catch (err: any) {
     if (err.code === 'ER_DUP_ENTRY') {
       res.json({
@@ -48,7 +55,6 @@ export const signUp = async (req: Request, res: Response) => {
       });
     } else {
       res.json(err);
-      console.log('signUp', err);
     }
   }
 };
@@ -60,62 +66,70 @@ export const signIn = async (req: Request, res: Response) => {
 
     if (user[0].length > 0) {
       if (bcrypt.compareSync(pass, user[0][0].pass)) {
-        const { id } = user[0][0];
+        const id = user[0][0].id;
         const { refreshToken, successToken } = generateToken(id, email);
-        await pool.query('UPDATE `users` SET ? WHERE `id` = ?', [{ refreshToken }, id]);
-        
+        await pool.query('UPDATE `users` SET ? WHERE `email` = ?', [{ refreshToken }, email]);
+
         res
           .status(200)
-          .cookie("refresh_token", refreshToken, {
+          .cookie('refresh_token', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
+            maxAge: 1000 * 60 * 60 * 24 * 30,
           })
           .json({
             successToken: successToken,
-            user: { 
-              userId: id,
-              name: user[0][0].name, 
-              email
+            user: {
+              name: user[0][0].name,
             },
           });
       } else resErrorUserPayload(res);
     } else resErrorUserPayload(res);
   } catch (err: any) {
     res.json(err);
-    console.log('signIn ---->', err);
   }
 };
 
-//TODO: дописать функции ниже
+//TODO: надо ли удалять рефреш токен в куках?
 
 export const signOut = async (req: Request, res: Response) => {
   try {
-  } catch (err: unknown) {}
-};
+    const { email } = jwt.decode(
+      req.headers.authorization?.split(' ')[1] || '',
+      {},
+    ) as IDecodeToken;
+    const refreshToken = null;
+    await pool.query('UPDATE `users` SET ? WHERE `email` = ?', [{ refreshToken }, email]);
 
-export const updateUser = async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id;
-    const { name, email } = req.body;
-    const pass = hashedPass(req.body.pass);
-    const user = await pool.query('UPDATE `users` SET ? WHERE `id` = ?', [
-      { name, email, pass },
-      id,
-    ]);
-    res.json(user[0]);
+    res.json({
+      signOut: true,
+    });
   } catch (err: unknown) {
     res.json(err);
-    console.log('updateUser', err);
   }
 };
 
-export const deleteUser = async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id;
-    const user = await pool.query('DELETE FROM `users` WHERE `id` = ?', id);
-    res.json(user[0]);
-  } catch (err: unknown) {
-    res.json(err);
-    console.log('deleteUser', err);
-  }
-};
+// export const updateUser = async (req: Request, res: Response) => {
+//   try {
+//     const id = req.params.id;
+//     const { name, email } = req.body;
+//     const pass = hashedPass(req.body.pass);
+//     const user = await pool.query('UPDATE `users` SET ? WHERE `id` = ?', [
+//       { name, email, pass },
+//       id,
+//     ]);
+//     res.json(user[0]);
+//   } catch (err: unknown) {
+//     res.json(err);
+//   }
+// };
+
+// export const deleteUser = async (req: Request, res: Response) => {
+//   try {
+//     const id = req.params.id;
+//     const user = await pool.query('DELETE FROM `users` WHERE `id` = ?', id);
+//     res.json(user[0]);
+//   } catch (err: unknown) {
+//     res.json(err);
+//     console.log('deleteUser', err);
+//   }
+// };
