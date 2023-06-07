@@ -19,15 +19,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 const corsOptions = {
-  origin: [
-    '*',
-    "http://localhost:3000",
-    "http://localhost:3002",
-  ],
+  origin: '*',
   methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
   credentials: true,
   allowedHeaders: "Origin, Content-Type, Authorization, X-Requested-With",
 }
+
 app.use(cors(corsOptions));
 app.use(cookieParser());
 
