@@ -4,9 +4,9 @@ import { isAliveSuccessToken } from '../middlewares/isAliveToken';
 const router = express.Router();
 
 router.post('/task', isAliveSuccessToken, task.createTask);
-router.get('/task/', task.readAllTasks);
-router.get('/task/:id', task.readOneTask);
-router.put('/task/:id', task.updateTask);
-router.delete('/task/:id', task.deleteTask);
+router.get('/task/', isAliveSuccessToken, task.readAllTasks);
+router.get('/task/:id', isAliveSuccessToken, task.readOneTask);
+router.put('/task/:id', isAliveSuccessToken, task.updateTask);
+router.delete('/task/:id', isAliveSuccessToken, task.deleteTask);
 
 export default router;

@@ -19,7 +19,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 const corsOptions = {
-  origin: `*`,
+  origin: [
+    '*',
+    "http://localhost:3000",
+    "http://localhost:3002",
+  ],
   methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
   credentials: true,
   allowedHeaders: "Origin, Content-Type, Authorization, X-Requested-With",
