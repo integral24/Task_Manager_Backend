@@ -89,8 +89,6 @@ export const signIn = async (req: Request, res: Response) => {
   }
 };
 
-//TODO: надо ли удалять рефреш токен в куках?
-
 export const signOut = async (req: Request, res: Response) => {
   try {
     const { email } = jwt.decode(
@@ -100,13 +98,24 @@ export const signOut = async (req: Request, res: Response) => {
     const refreshToken = null;
     await pool.query('UPDATE `users` SET ? WHERE `email` = ?', [{ refreshToken }, email]);
 
-    res.json({
-      signOut: true,
-    });
+    res
+      .status(200)
+      .cookie('refresh_token', ' ', {
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24 * 30,
+      })
+      .json({
+        signOut: true,
+      });
   } catch (err: unknown) {
     res.json(err);
   }
 };
+
+
+
+
+
 
 // export const updateUser = async (req: Request, res: Response) => {
 //   try {

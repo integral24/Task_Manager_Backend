@@ -18,8 +18,15 @@ app.get('/', (req: Request, res: Response) => {
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+const whitelist = ['http://localhost:3000', 'https://dev-tm.gowart.ru/', 'https://tm.gowart.ru/']
 const corsOptions = {
-  origin: '*',
+  origin: function(origin: any, callback: any) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
   methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
   credentials: true,
   allowedHeaders: "Origin, Content-Type, Authorization, X-Requested-With",
