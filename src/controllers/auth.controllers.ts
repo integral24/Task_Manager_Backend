@@ -39,6 +39,8 @@ export const signUp = async (req: Request, res: Response) => {
         .cookie('refresh_token', refreshToken, {
           httpOnly: true,
           maxAge: 1000 * 60 * 60 * 24 * 30,
+          secure: true,
+          sameSite: 'none',
         })
         .json({
           successToken: successToken,
@@ -75,6 +77,8 @@ export const signIn = async (req: Request, res: Response) => {
           .cookie('refresh_token', refreshToken, {
             httpOnly: true,
             maxAge: 1000 * 60 * 60 * 24 * 30,
+            secure: true,
+            sameSite: 'none',
           })
           .json({
             successToken: successToken,
@@ -103,6 +107,8 @@ export const signOut = async (req: Request, res: Response) => {
       .cookie('refresh_token', ' ', {
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 * 30,
+        secure: true,
+        sameSite: 'none',
       })
       .json({
         signOut: true,
