@@ -38,15 +38,17 @@ export const createTask = async (req: Request, res: Response) => {
 
     if (id) {
       const data: any = await pool.query('SELECT * FROM `tasks` WHERE `id` = ?', id);
-      res.json({
+      res.json([{
         id,
         title: getData(data).title,
         description: getData(data).description,
         done: getData(data).done,
         createDate: getData(data).createDate,
         type: getData(data).type,
-      });
-    } else res.json('Wrong insert');
+      }]);
+    } else res.json({
+      error: 'Wrong insert',
+    });
   } catch (err: unknown) {
     res.json(err);
   }
@@ -139,11 +141,12 @@ export const deleteTask = async (req: Request, res: Response) => {
 
     if (del[0]?.affectedRows === 1) {
       res.json({
-        deleted: true,
+        id,
+        delete: true,
       });
     } else
       res.json({
-        deleted: false,
+        error: 'deletion failed',
       });
   } catch (err: unknown) {
     res.json(err);

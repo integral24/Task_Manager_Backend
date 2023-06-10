@@ -23,6 +23,8 @@ export const refreshTokenController = async (req: Request, res: Response) => {
           .cookie('refresh_token', newToken.refreshToken, {
             httpOnly: true,
             maxAge: 1000 * 60 * 60 * 24 * 30,
+            secure: true,
+            sameSite: 'none',
           })
           .json({
             successToken: newToken.successToken,
