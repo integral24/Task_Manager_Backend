@@ -18,20 +18,20 @@ app.get('/', (req: Request, res: Response) => {
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-const whitelist = ['http://localhost:3000', 'https://dev-tm.gowart.ru', 'https://tm.gowart.ru']
+const whitelist = ['http://localhost:3000', 'https://dev-tm.gowart.ru', 'https://tm.gowart.ru'];
 const corsOptions = {
-  origin: function(origin: any, callback: any) {
+  origin: function (origin: any, callback: any) {
     if (whitelist.indexOf(origin) !== -1) {
-      callback(null, true)
+      callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS !'))
+      callback(new Error('Not allowed by CORS !'));
     }
   },
-  methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
+  methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH'],
   credentials: true,
-  exposedHeaders: ["set-cookie"],
-  allowedHeaders: "Origin, Content-Type, Authorization, X-Requested-With",
-}
+  exposedHeaders: ['set-cookie'],
+  allowedHeaders: 'Origin, Content-Type, Authorization, X-Requested-With',
+};
 
 app.use(cors(corsOptions));
 app.use(cookieParser());
