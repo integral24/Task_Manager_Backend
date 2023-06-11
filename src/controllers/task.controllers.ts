@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import pool from '../assets/db';
+import { errors, messages } from '../assets/responses';
 
 interface IDecodeToken {
   userId: number;
@@ -22,10 +23,7 @@ const getData = (data: any): ITask => data[0][0];
 export const createTask = async (req: Request, res: Response) => {
   try {
     const { title, description, done, type } = req.body;
-    const { userId } = jwt.decode(
-      req.headers.authorization?.split(' ')[1] || '',
-      {},
-    ) as IDecodeToken;
+    const { userId } = jwt.decode(req.headers.authorization?.split(' ')[1] || '', {}) as IDecodeToken;
     const newTask: any = await pool.query('INSERT INTO `tasks` SET ?', {
       userId,
       title,
@@ -34,21 +32,24 @@ export const createTask = async (req: Request, res: Response) => {
       type,
     });
 
-    const id = newTask[0].insertId;
+    const id = newTask[0]?.insertId;
 
     if (id) {
       const data: any = await pool.query('SELECT * FROM `tasks` WHERE `id` = ?', id);
-      res.json([{
-        id,
-        title: getData(data).title,
-        description: getData(data).description,
-        done: getData(data).done,
-        createDate: getData(data).createDate,
-        type: getData(data).type,
-      }]);
-    } else res.json({
-      error: 'Wrong insert',
-    });
+      res.json([
+        {
+          id,
+          title: getData(data).title,
+          description: getData(data).description,
+          done: getData(data).done,
+          createDate: getData(data).createDate,
+          type: getData(data).type,
+        },
+      ]);
+    } else
+      res.json({
+        error: errors.insertError,
+      });
   } catch (err: unknown) {
     res.json(err);
   }
@@ -56,10 +57,7 @@ export const createTask = async (req: Request, res: Response) => {
 
 export const readAllTasks = async (req: Request, res: Response) => {
   try {
-    const { userId } = jwt.decode(
-      req.headers.authorization?.split(' ')[1] || '',
-      {},
-    ) as IDecodeToken;
+    const { userId } = jwt.decode(req.headers.authorization?.split(' ')[1] || '', {}) as IDecodeToken;
     const tasks = await pool.query(
       'SELECT `id`, `title`, `description`, `done`, `createDate`, `type` FROM `tasks` WHERE `userId` = ?',
       userId,
@@ -72,10 +70,7 @@ export const readAllTasks = async (req: Request, res: Response) => {
 
 export const readOneTask = async (req: Request, res: Response) => {
   try {
-    const { userId } = jwt.decode(
-      req.headers.authorization?.split(' ')[1] || '',
-      {},
-    ) as IDecodeToken;
+    const { userId } = jwt.decode(req.headers.authorization?.split(' ')[1] || '', {}) as IDecodeToken;
     const id = req.params.id;
     const tasks = await pool.query(
       `'SELECT id, title, description, done, createDate, type FROM tasks WHERE id = ${id} AND userId = ${userId}'`.slice(
@@ -91,25 +86,19 @@ export const readOneTask = async (req: Request, res: Response) => {
 
 export const updateTask = async (req: Request, res: Response) => {
   try {
-    const { userId } = jwt.decode(
-      req.headers.authorization?.split(' ')[1] || '',
-      {},
-    ) as IDecodeToken;
+    const { userId } = jwt.decode(req.headers.authorization?.split(' ')[1] || '', {}) as IDecodeToken;
     const id = req.params.id;
     const { title, description, done, type } = req.body;
-    const updatedTask: any = await pool.query(
-      'UPDATE `tasks` SET ? WHERE `id` = ? AND `userId` = ?',
-      [
-        {
-          title,
-          description,
-          done,
-          type,
-        },
-        id,
-        userId,
-      ],
-    );
+    const updatedTask: any = await pool.query('UPDATE `tasks` SET ? WHERE `id` = ? AND `userId` = ?', [
+      {
+        title,
+        description,
+        done,
+        type,
+      },
+      id,
+      userId,
+    ]);
 
     if (updatedTask[0]?.changedRows === 1) {
       const task = await pool.query(
@@ -121,7 +110,7 @@ export const updateTask = async (req: Request, res: Response) => {
       res.json(task[0]);
     } else
       res.json({
-        error: 'nothing to change',
+        error: errors.noChange,
       });
   } catch (err: unknown) {
     res.json(err);
@@ -130,24 +119,20 @@ export const updateTask = async (req: Request, res: Response) => {
 
 export const deleteTask = async (req: Request, res: Response) => {
   try {
-    const { userId } = jwt.decode(
-      req.headers.authorization?.split(' ')[1] || '',
-      {},
-    ) as IDecodeToken;
+    const { userId } = jwt.decode(req.headers.authorization?.split(' ')[1] || '', {}) as IDecodeToken;
     const id = req.params.id;
-    const del: any = await pool.query(
-      `'DELETE FROM tasks WHERE id = ${id} AND userId = ${userId}'`.slice(1, -1),
-    );
+    const del: any = await pool.query(`'DELETE FROM tasks WHERE id = ${id} AND userId = ${userId}'`.slice(1, -1));
 
     if (del[0]?.affectedRows === 1) {
       res.json({
         id,
-        delete: true,
+        message: messages.delTaskSuccess,
       });
-    } else
+    } else {
       res.json({
-        error: 'deletion failed',
+        error: errors.delTaskError,
       });
+    }
   } catch (err: unknown) {
     res.json(err);
   }
