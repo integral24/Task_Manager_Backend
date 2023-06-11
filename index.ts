@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3002;
 const app = express();
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('The server is enabled..');
+  res.send('The server is enable..');
 });
 
 app.use(bodyParser.urlencoded({ extended: true }));

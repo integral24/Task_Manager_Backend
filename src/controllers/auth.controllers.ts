@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import pool from '../assets/db';
 import bcrypt from 'bcrypt';
 import { generateToken } from '../assets/tokenServices';
+import { errors, messages } from '../assets/responses';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -15,12 +16,6 @@ interface IDecodeToken {
 
 const hashedPass = (pass: string) => {
   return bcrypt.hashSync(pass, 10);
-};
-
-const resErrorUserPayload = (res: Response) => {
-  return res.status(200).json({
-    error: 'Wrong auth data',
-  });
 };
 
 export const signUp = async (req: Request, res: Response) => {
@@ -45,15 +40,21 @@ export const signUp = async (req: Request, res: Response) => {
         .json({
           successToken: successToken,
           user: {
+            id,
             name,
+            email,
           },
+          message: messages.regSuccess,
         });
-    } else resErrorUserPayload(res);
+    } else {
+      res.status(200).json({
+        error: errors.incorrectUserData,
+      });
+    }
   } catch (err: any) {
     if (err.code === 'ER_DUP_ENTRY') {
       res.json({
-        message: err.message,
-        code: 1,
+        error: errors.doubleEmail,
       });
     } else {
       res.json(err);
@@ -83,11 +84,22 @@ export const signIn = async (req: Request, res: Response) => {
           .json({
             successToken: successToken,
             user: {
+              id,
               name: user[0][0].name,
+              email,
             },
+            message: messages.signinSuccess,
           });
-      } else resErrorUserPayload(res);
-    } else resErrorUserPayload(res);
+      } else {
+        res.status(200).json({
+          error: errors.wrongPass,
+        });
+      }
+    } else {
+      res.status(200).json({
+        error: errors.wrongEmail,
+      });
+    }
   } catch (err: any) {
     res.json(err);
   }
@@ -95,33 +107,25 @@ export const signIn = async (req: Request, res: Response) => {
 
 export const signOut = async (req: Request, res: Response) => {
   try {
-    const { email } = jwt.decode(
-      req.headers.authorization?.split(' ')[1] || '',
-      {},
-    ) as IDecodeToken;
+    const { email } = jwt.decode(req.headers.authorization?.split(' ')[1] || '', {}) as IDecodeToken;
     const refreshToken = null;
     await pool.query('UPDATE `users` SET ? WHERE `email` = ?', [{ refreshToken }, email]);
 
     res
       .status(200)
-      .cookie('refresh_token', ' ', {
+      .cookie('refresh_token', '', {
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 24 * 30,
         secure: true,
         sameSite: 'none',
       })
       .json({
-        signOut: true,
+        message: messages.signoutSuccess,
       });
   } catch (err: unknown) {
     res.json(err);
   }
 };
-
-
-
-
-
 
 // export const updateUser = async (req: Request, res: Response) => {
 //   try {
