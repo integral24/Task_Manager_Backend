@@ -26,7 +26,7 @@ export const isAliveRefreshToken = (req: Request, res: Response, next: NextFunct
     { complete: true },
     (err, decode) => {
       if (err) {
-        res.status(401).json({
+        res.status(403).json({
           error: 'Need signin',
         });
       } else {
