@@ -127,6 +127,30 @@ export const signOut = async (req: Request, res: Response) => {
   }
 };
 
+export const getUser = async (req: Request, res: Response) => {
+  try {
+    const { email } = jwt.decode(req.headers.authorization?.split(' ')[1] || '', {}) as IDecodeToken;
+    const user: any = await pool.query('SELECT * FROM `users` WHERE `email` = ?', email);
+
+    if (user[0].length > 0) {
+      const { id, name } = user[0][0];
+      res.status(200).json({
+        user: {
+          id,
+          name,
+          email,
+        },
+      });
+    } else {
+      res.status(403).json({
+        error: errors.wrongEmail,
+      });
+    }
+  } catch (err: any) {
+    res.json(err);
+  }
+};
+
 // export const updateUser = async (req: Request, res: Response) => {
 //   try {
 //     const id = req.params.id;

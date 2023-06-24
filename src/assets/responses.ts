@@ -8,6 +8,8 @@ export const errors = {
   insertError: 'Error writing to the database',
   noChange: 'There is no data for changes',
   delTaskError: 'The task was not deleted',
+  needAuthorization: 'Need authorization',
+  accessTokenExp: 'AccessToken expired',
 };
 
 export const messages = {
