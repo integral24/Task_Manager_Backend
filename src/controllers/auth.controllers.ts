@@ -26,7 +26,7 @@ export const signUp = async (req: Request, res: Response) => {
 
       const newUser: any = await pool.query('INSERT INTO `users` SET ?', { name, email, pass });
       const id = newUser[0].insertId;
-      const { refreshToken, successToken } = generateToken(id, email);
+      const { refreshToken, accessToken } = generateToken(id, email);
       await pool.query('UPDATE `users` SET ? WHERE `id` = ?', [{ refreshToken }, id]);
 
       res
@@ -38,7 +38,7 @@ export const signUp = async (req: Request, res: Response) => {
           sameSite: 'none',
         })
         .json({
-          successToken: successToken,
+          accessToken: accessToken,
           user: {
             id,
             name,
@@ -70,7 +70,7 @@ export const signIn = async (req: Request, res: Response) => {
     if (user[0].length > 0) {
       if (bcrypt.compareSync(pass, user[0][0].pass)) {
         const id = user[0][0].id;
-        const { refreshToken, successToken } = generateToken(id, email);
+        const { refreshToken, accessToken } = generateToken(id, email);
         await pool.query('UPDATE `users` SET ? WHERE `email` = ?', [{ refreshToken }, email]);
 
         res
@@ -82,7 +82,7 @@ export const signIn = async (req: Request, res: Response) => {
             sameSite: 'none',
           })
           .json({
-            successToken: successToken,
+            accessToken: accessToken,
             user: {
               id,
               name: user[0][0].name,

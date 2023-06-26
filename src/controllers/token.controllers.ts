@@ -29,7 +29,7 @@ export const refreshTokenController = async (req: Request, res: Response) => {
             sameSite: 'none',
           })
           .json({
-            successToken: newToken.successToken,
+            accessToken: newToken.accessToken,
             message: messages.refreshSuccess,
           });
       } else {

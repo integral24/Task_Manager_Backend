@@ -4,7 +4,7 @@ import { errors } from '../assets/responses';
 import dotenv from 'dotenv';
 dotenv.config();
 
-export const isAliveSuccessToken = (req: Request, res: Response, next: NextFunction) => {
+export const isAliveAccessToken = (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers.authorization?.split(' ')[1];
 
   if (!token) {
