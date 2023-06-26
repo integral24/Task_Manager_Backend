@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import pool from '../assets/db';
 import { errors, messages } from '../assets/responses';
 
-interface IDecodeToken {
+export interface IDecodeToken {
   userId: number;
   email: string;
   iat: number;
@@ -57,6 +57,7 @@ export const createTask = async (req: Request, res: Response) => {
 
 export const readAllTasks = async (req: Request, res: Response) => {
   try {
+    console.log(req);
     const { userId } = jwt.decode(req.headers.authorization?.split(' ')[1] || '', {}) as IDecodeToken;
     const tasks = await pool.query(
       'SELECT `id`, `title`, `description`, `done`, `createDate`, `type` FROM `tasks` WHERE `userId` = ?',

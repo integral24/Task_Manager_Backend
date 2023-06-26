@@ -26,7 +26,7 @@ export const signUp = async (req: Request, res: Response) => {
 
       const newUser: any = await pool.query('INSERT INTO `users` SET ?', { name, email, pass });
       const id = newUser[0].insertId;
-      const { refreshToken, successToken } = generateToken(id, email);
+      const { refreshToken, accessToken } = generateToken(id, email);
       await pool.query('UPDATE `users` SET ? WHERE `id` = ?', [{ refreshToken }, id]);
 
       res
@@ -38,7 +38,7 @@ export const signUp = async (req: Request, res: Response) => {
           sameSite: 'none',
         })
         .json({
-          successToken: successToken,
+          accessToken: accessToken,
           user: {
             id,
             name,
@@ -70,7 +70,7 @@ export const signIn = async (req: Request, res: Response) => {
     if (user[0].length > 0) {
       if (bcrypt.compareSync(pass, user[0][0].pass)) {
         const id = user[0][0].id;
-        const { refreshToken, successToken } = generateToken(id, email);
+        const { refreshToken, accessToken } = generateToken(id, email);
         await pool.query('UPDATE `users` SET ? WHERE `email` = ?', [{ refreshToken }, email]);
 
         res
@@ -82,7 +82,7 @@ export const signIn = async (req: Request, res: Response) => {
             sameSite: 'none',
           })
           .json({
-            successToken: successToken,
+            accessToken: accessToken,
             user: {
               id,
               name: user[0][0].name,
@@ -123,6 +123,30 @@ export const signOut = async (req: Request, res: Response) => {
         message: messages.signoutSuccess,
       });
   } catch (err: unknown) {
+    res.json(err);
+  }
+};
+
+export const getUser = async (req: Request, res: Response) => {
+  try {
+    const { email } = jwt.decode(req.headers.authorization?.split(' ')[1] || '', {}) as IDecodeToken;
+    const user: any = await pool.query('SELECT * FROM `users` WHERE `email` = ?', email);
+
+    if (user[0].length > 0) {
+      const { id, name } = user[0][0];
+      res.status(200).json({
+        user: {
+          id,
+          name,
+          email,
+        },
+      });
+    } else {
+      res.status(403).json({
+        error: errors.wrongEmail,
+      });
+    }
+  } catch (err: any) {
     res.json(err);
   }
 };

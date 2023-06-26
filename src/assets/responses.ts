@@ -1,6 +1,6 @@
 export const errors = {
   incorrectUserData: 'Incorrect user data',
-  doubleEmail: 'A user with such an email already exists',
+  doubleEmail: 'Email already exists',
   wrongPass: 'Wrong password',
   wrongEmail: 'User not found',
   wrongRefreshToken: 'Wrong refresh token',
@@ -8,13 +8,15 @@ export const errors = {
   insertError: 'Error writing to the database',
   noChange: 'There is no data for changes',
   delTaskError: 'The task was not deleted',
+  needAuthorization: 'Need authorization',
+  accessTokenExp: 'AccessToken expired',
 };
 
 export const messages = {
-  regSuccess: 'Registration of a new user was successful',
-  signinSuccess: 'Signin completed successfully',
-  signoutSuccess: 'The user signed out of the account',
-  refreshSuccess: 'Tokens have been updated',
-  createTaskSuccess: 'The task was successfully created',
-  delTaskSuccess: 'The task was deleted',
+  regSuccess: 'Registration success',
+  signinSuccess: 'Signin success',
+  signoutSuccess: 'Signout success',
+  refreshSuccess: 'Tokens refresh success',
+  createTaskSuccess: 'Task was created',
+  delTaskSuccess: 'Task was deleted',
 };

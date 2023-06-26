@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 interface IJwt {
-  successToken: string;
+  accessToken: string;
   refreshToken: string;
 }
 
@@ -17,7 +17,7 @@ export const generateToken = (name: string, email: string): IJwt => {
   };
 
   return {
-    successToken: createToken(payload, '30m'),
+    accessToken: createToken(payload, '30m'),
     refreshToken: createToken(payload, '30d'),
   };
 };

@@ -2,10 +2,14 @@ import { Request, Response } from 'express';
 import pool from '../assets/db';
 import { generateToken } from '../assets/tokenServices';
 import { errors, messages } from '../assets/responses';
+import jwt from 'jsonwebtoken';
+import { IDecodeToken } from './task.controllers';
 
 export const refreshTokenController = async (req: Request, res: Response) => {
   try {
-    const { email } = req.body;
+    // console.log(req);
+    // const { email } = req.body;
+    const { email } = jwt.decode(req.cookies.refresh_token, {}) as IDecodeToken;
     const currentToken = req.cookies.refresh_token;
     const user: any = await pool.query('SELECT * FROM `users` WHERE `email` = ?', email);
 
@@ -25,7 +29,7 @@ export const refreshTokenController = async (req: Request, res: Response) => {
             sameSite: 'none',
           })
           .json({
-            successToken: newToken.successToken,
+            accessToken: newToken.accessToken,
             message: messages.refreshSuccess,
           });
       } else {
