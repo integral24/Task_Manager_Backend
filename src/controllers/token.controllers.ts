@@ -7,8 +7,6 @@ import { IDecodeToken } from './task.controllers';
 
 export const refreshTokenController = async (req: Request, res: Response) => {
   try {
-    // console.log(req);
-    // const { email } = req.body;
     const { email } = jwt.decode(req.cookies.refresh_token, {}) as IDecodeToken;
     const currentToken = req.cookies.refresh_token;
     const user: any = await pool.query('SELECT * FROM `users` WHERE `email` = ?', email);
@@ -16,38 +14,26 @@ export const refreshTokenController = async (req: Request, res: Response) => {
     if (user[0].length > 0) {
       const { id, refreshToken } = user[0][0];
       if (currentToken === refreshToken) {
-        const newToken = generateToken(id, email);
-        const refreshToken = newToken.refreshToken;
+        const newTokens = generateToken(id, email);
+        const refreshToken = newTokens.refreshToken;
         await pool.query('UPDATE `users` SET ? WHERE `email` = ?', [{ refreshToken }, email]);
 
         res
           .status(200)
-          .cookie('refresh_token', newToken.refreshToken, {
+          .cookie('refresh_token', newTokens.refreshToken, {
             httpOnly: true,
             maxAge: 1000 * 60 * 60 * 24 * 30,
             secure: true,
             sameSite: 'none',
           })
           .json({
-            accessToken: newToken.accessToken,
+            accessToken: newTokens.accessToken,
             message: messages.refreshSuccess,
           });
       } else {
-        const refreshToken = null;
-        await pool.query('UPDATE `users` SET ? WHERE `email` = ?', [{ refreshToken }, email]);
-
-        res
-          .status(200)
-          .cookie('refresh_token', '', {
-            httpOnly: true,
-            maxAge: 1000 * 60 * 60 * 24 * 30,
-            secure: true,
-            sameSite: 'none',
-          })
-          .json({
-            message: messages.signoutSuccess,
-            error: errors.wrongRefreshToken,
-          });
+        res.status(403).json({
+          error: errors.needAuthorization,
+        });
       }
     } else {
       res.status(404).json({

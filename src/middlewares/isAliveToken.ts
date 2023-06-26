@@ -18,10 +18,6 @@ export const isAliveAccessToken = (req: Request, res: Response, next: NextFuncti
           error: errors.accessTokenExp,
         });
       } else {
-        const { email } = decode?.payload as {email: string};
-        // res.json({
-        //   data: email
-        // })
         next();
       }
     });
@@ -34,7 +30,7 @@ export const isAliveRefreshToken = (req: Request, res: Response, next: NextFunct
   jwt.verify(token as string, process.env.TOKEN_SECRET as string, { complete: true }, (err, decode) => {
     if (err) {
       res.status(403).json({
-        error: 'Need signin',
+        error: errors.needAuthorization,
       });
     } else {
       next();
