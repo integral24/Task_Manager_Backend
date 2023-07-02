@@ -18,11 +18,38 @@ interface ITask {
   createDate: string;
   type: string;
 }
+type typeOptions = 'Срочные' | 'Важные' | 'Обычные' | 'Все';
+
+interface ISort {
+  type: typeOptions;
+  requestPage: number;
+}
 const getData = (data: any): ITask => data[0][0];
+
+const getCurrentTasks = async (userId: number): Promise<ITask[] | undefined> => {
+  try {
+    const tasks = await pool.query(
+      'SELECT `id`, `title`, `description`, `done`, `createDate`, `type` FROM `tasks` WHERE `userId` = ?',
+      userId,
+    );
+    return tasks[0] as ITask[];
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+const sortingHandler = (tasks: ITask[], sort: ISort) => {
+  if (tasks.length > 0) {
+    const sortedTasks = tasks.reverse();
+    return sortedTasks;
+  } else return tasks;
+};
 
 export const createTask = async (req: Request, res: Response) => {
   try {
-    const { title, description, done, type } = req.body;
+    const { title, description, done, type } = req.body.task;
+    const sort = req.body.sort;
+    console.log(sort);
     const { userId } = jwt.decode(req.headers.authorization?.split(' ')[1] || '', {}) as IDecodeToken;
     const newTask: any = await pool.query('INSERT INTO `tasks` SET ?', {
       userId,
@@ -32,24 +59,18 @@ export const createTask = async (req: Request, res: Response) => {
       type,
     });
 
-    const id = newTask[0]?.insertId;
-
-    if (id) {
-      const data: any = await pool.query('SELECT * FROM `tasks` WHERE `id` = ?', id);
-      res.json([
-        {
-          id,
-          title: getData(data).title,
-          description: getData(data).description,
-          done: getData(data).done,
-          createDate: getData(data).createDate,
-          type: getData(data).type,
-        },
-      ]);
-    } else
+    const currentTasks = await getCurrentTasks(userId);
+    if (currentTasks) {
+      const tasks = sortingHandler(currentTasks, sort);
+      res.json({
+        tasks,
+        message: messages.taskWasCreated,
+      });
+    } else {
       res.json({
         error: errors.insertError,
       });
+    }
   } catch (err: unknown) {
     res.json(err);
   }
@@ -57,7 +78,6 @@ export const createTask = async (req: Request, res: Response) => {
 
 export const readAllTasks = async (req: Request, res: Response) => {
   try {
-    console.log(req);
     const { userId } = jwt.decode(req.headers.authorization?.split(' ')[1] || '', {}) as IDecodeToken;
     const tasks = await pool.query(
       'SELECT `id`, `title`, `description`, `done`, `createDate`, `type` FROM `tasks` WHERE `userId` = ?',
@@ -128,6 +148,7 @@ export const deleteTask = async (req: Request, res: Response) => {
       res.json({
         id,
         message: messages.delTaskSuccess,
+        delete: true,
       });
     } else {
       res.json({

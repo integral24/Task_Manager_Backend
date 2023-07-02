@@ -5,7 +5,7 @@ export const errors = {
   wrongEmail: 'User not found',
   wrongRefreshToken: 'Wrong refresh token',
   errorTokenService: 'Error token service',
-  insertError: 'Error writing to the database',
+  insertError: 'Error of database',
   noChange: 'There is no data for changes',
   delTaskError: 'The task was not deleted',
   needAuthorization: 'Need authorization',
@@ -19,4 +19,8 @@ export const messages = {
   refreshSuccess: 'Tokens refresh success',
   createTaskSuccess: 'Task was created',
   delTaskSuccess: 'Task was deleted',
+  taskWasCreated: 'Task was created',
+  taskWasUpdated: 'Task was updated',
+  oneTask: 'One task',
+  allTasks: 'All tasks',
 };
